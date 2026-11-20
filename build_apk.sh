@@ -9,8 +9,12 @@ PROJECT_DIR="$HOME/DragonMania-Android"
 cd "$PROJECT_DIR"
 
 if [ ! -f "android.jar" ]; then
-  echo "📥 android.jar tidak ditemukan..."
-  exit 1
+  echo "📥 android.jar tidak ditemukan, menyalin atau mengunduh..."
+  if [ -f "$HOME/DiamondRush-Android/android.jar" ]; then
+    cp "$HOME/DiamondRush-Android/android.jar" .
+  else
+    curl -L -o android.jar "https://github.com/SupaRj/gow-betrayal-remastered-Android-Native-port/raw/main/android.jar"
+  fi
 fi
 
 echo "🔥 [1/6] Menyiapkan direktori build..."
