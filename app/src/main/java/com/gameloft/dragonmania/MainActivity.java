@@ -20,6 +20,9 @@ import android.view.View;
 import android.view.Window;
 import android.view.WindowManager;
 
+import java.lang.reflect.Field;
+import java.lang.reflect.Method;
+
 import javax.microedition.lcdui.ResourceLoader;
 
 public class MainActivity extends Activity {
@@ -196,6 +199,35 @@ public class MainActivity extends Activity {
         private RectF rectGame = new RectF();
         private Vibrator vibrator;
 
+        // Cheat Menu UI elements
+        private boolean showCheatModal = false;
+        private String cheatNotification = null;
+        private long cheatNotificationTime = 0;
+
+        private RectF rectCheatBtn = new RectF();
+        private RectF rectCheatModalBox = new RectF();
+        private RectF rectCheatGold = new RectF();
+        private RectF rectCheatGems = new RectF();
+        private RectF rectCheatFood = new RectF();
+        private RectF rectCheatLevel = new RectF();
+        private RectF rectCheatEnergy = new RectF();
+        private RectF rectCheatCooldown = new RectF();
+        private RectF rectCheatClose = new RectF();
+
+        // Cheat Paints
+        private Paint cheatBtnPaint;
+        private Paint cheatBtnBorderPaint;
+        private Paint cheatBtnTextPaint;
+        private Paint modalBgPaint;
+        private Paint modalBoxPaint;
+        private Paint modalBorderPaint;
+        private Paint modalTitlePaint;
+        private Paint modalItemPaint;
+        private Paint modalItemBorderPaint;
+        private Paint modalItemTextPaint;
+        private Paint toastBgPaint;
+        private Paint toastTextPaint;
+
         public GameView(Context context) {
             super(context);
             holder = getHolder();
@@ -208,6 +240,69 @@ public class MainActivity extends Activity {
             blackPaint.setColor(0xFF000000);
 
             vibrator = (Vibrator) context.getSystemService(Context.VIBRATOR_SERVICE);
+
+            initCheatPaints();
+        }
+
+        private void initCheatPaints() {
+            cheatBtnPaint = new Paint();
+            cheatBtnPaint.setColor(0x881A2233); // Glassmorphism translucent
+            cheatBtnPaint.setStyle(Paint.Style.FILL);
+
+            cheatBtnBorderPaint = new Paint(Paint.ANTI_ALIAS_FLAG);
+            cheatBtnBorderPaint.setColor(0xFFFFD54F); // Gold trim
+            cheatBtnBorderPaint.setStyle(Paint.Style.STROKE);
+            cheatBtnBorderPaint.setStrokeWidth(3f);
+
+            cheatBtnTextPaint = new Paint(Paint.ANTI_ALIAS_FLAG);
+            cheatBtnTextPaint.setColor(0xFFFFD54F);
+            cheatBtnTextPaint.setTextSize(22f);
+            cheatBtnTextPaint.setFakeBoldText(true);
+            cheatBtnTextPaint.setTextAlign(Paint.Align.CENTER);
+
+            modalBgPaint = new Paint();
+            modalBgPaint.setColor(0x99000000); // Dark dimmed backdrop
+            modalBgPaint.setStyle(Paint.Style.FILL);
+
+            modalBoxPaint = new Paint();
+            modalBoxPaint.setColor(0xF0101622); // Deep navy dragon slate
+            modalBoxPaint.setStyle(Paint.Style.FILL);
+
+            modalBorderPaint = new Paint(Paint.ANTI_ALIAS_FLAG);
+            modalBorderPaint.setColor(0xFFFFB300);
+            modalBorderPaint.setStyle(Paint.Style.STROKE);
+            modalBorderPaint.setStrokeWidth(4f);
+
+            modalTitlePaint = new Paint(Paint.ANTI_ALIAS_FLAG);
+            modalTitlePaint.setColor(0xFFFFF8E1);
+            modalTitlePaint.setTextSize(28f);
+            modalTitlePaint.setFakeBoldText(true);
+            modalTitlePaint.setTextAlign(Paint.Align.CENTER);
+
+            modalItemPaint = new Paint();
+            modalItemPaint.setColor(0xCC202C40);
+            modalItemPaint.setStyle(Paint.Style.FILL);
+
+            modalItemBorderPaint = new Paint(Paint.ANTI_ALIAS_FLAG);
+            modalItemBorderPaint.setColor(0x88FFD54F);
+            modalItemBorderPaint.setStyle(Paint.Style.STROKE);
+            modalItemBorderPaint.setStrokeWidth(2f);
+
+            modalItemTextPaint = new Paint(Paint.ANTI_ALIAS_FLAG);
+            modalItemTextPaint.setColor(0xFFFFFFFF);
+            modalItemTextPaint.setTextSize(22f);
+            modalItemTextPaint.setFakeBoldText(true);
+            modalItemTextPaint.setTextAlign(Paint.Align.CENTER);
+
+            toastBgPaint = new Paint();
+            toastBgPaint.setColor(0xEEFF6F00); // Amber glow toast
+            toastBgPaint.setStyle(Paint.Style.FILL);
+
+            toastTextPaint = new Paint(Paint.ANTI_ALIAS_FLAG);
+            toastTextPaint.setColor(0xFFFFFFFF);
+            toastTextPaint.setTextSize(24f);
+            toastTextPaint.setFakeBoldText(true);
+            toastTextPaint.setTextAlign(Paint.Align.CENTER);
         }
 
         @Override
@@ -234,6 +329,32 @@ public class MainActivity extends Activity {
             if (w <= 0 || h <= 0) return;
             // Fill 100% full screen edge-to-edge following user device resolution
             rectGame.set(0, 0, w, h);
+
+            // Floating Cheat button in top-right corner
+            float btnW = 130f;
+            float btnH = 48f;
+            float margin = 16f;
+            rectCheatBtn.set(w - btnW - margin, margin, w - margin, margin + btnH);
+
+            // Layout Cheat Modal
+            float modalW = Math.min(w * 0.85f, 560f);
+            float modalH = Math.min(h * 0.90f, 440f);
+            float modalLeft = (w - modalW) / 2f;
+            float modalTop = (h - modalH) / 2f;
+            rectCheatModalBox.set(modalLeft, modalTop, modalLeft + modalW, modalTop + modalH);
+
+            float itemH = (modalH - 100f) / 6f;
+            float padX = 24f;
+            float curY = modalTop + 55f;
+            float curW = modalW - padX * 2f;
+
+            rectCheatGold.set(modalLeft + padX, curY, modalLeft + padX + curW, curY + itemH - 6f); curY += itemH;
+            rectCheatGems.set(modalLeft + padX, curY, modalLeft + padX + curW, curY + itemH - 6f); curY += itemH;
+            rectCheatFood.set(modalLeft + padX, curY, modalLeft + padX + curW, curY + itemH - 6f); curY += itemH;
+            rectCheatLevel.set(modalLeft + padX, curY, modalLeft + padX + curW, curY + itemH - 6f); curY += itemH;
+            rectCheatEnergy.set(modalLeft + padX, curY, modalLeft + padX + curW, curY + itemH - 6f); curY += itemH;
+            rectCheatCooldown.set(modalLeft + padX, curY, modalLeft + padX + curW, curY + itemH - 6f); curY += itemH;
+            rectCheatClose.set(modalLeft + padX * 2f, modalTop + modalH - 42f, modalLeft + modalW - padX * 2f, modalTop + modalH - 8f);
         }
 
         @Override
@@ -270,7 +391,7 @@ public class MainActivity extends Activity {
                 layoutScreen(screenW, screenH);
             }
 
-            // Draw game frame from Canvas.displayBitmap
+            // 1. Draw game frame from Canvas.displayBitmap (Scaled Full Screen)
             synchronized (javax.microedition.lcdui.Canvas.renderLock) {
                 Bitmap gameBmp = javax.microedition.lcdui.Canvas.displayBitmap;
                 if (gameBmp != null) {
@@ -278,16 +399,117 @@ public class MainActivity extends Activity {
                     c.drawBitmap(gameBmp, srcRect, rectGame, bitmapPaint);
                 }
             }
+
+            // 2. Draw Floating ⚡ CHEAT Button
+            c.drawRoundRect(rectCheatBtn, 14f, 14f, cheatBtnPaint);
+            c.drawRoundRect(rectCheatBtn, 14f, 14f, cheatBtnBorderPaint);
+            c.drawText("⚡ CHEAT", rectCheatBtn.centerX(), rectCheatBtn.centerY() + 7f, cheatBtnTextPaint);
+
+            // 3. Draw Cheat Toast if active
+            if (cheatNotification != null && (System.currentTimeMillis() - cheatNotificationTime < 2500)) {
+                float toastW = Math.min(screenW * 0.7f, 420f);
+                float toastLeft = (screenW - toastW) / 2f;
+                RectF toastRect = new RectF(toastLeft, 14f, toastLeft + toastW, 64f);
+                c.drawRoundRect(toastRect, 12f, 12f, toastBgPaint);
+                c.drawText(cheatNotification, toastRect.centerX(), toastRect.centerY() + 8f, toastTextPaint);
+            }
+
+            // 4. Draw Cheat Modal Dialog
+            if (showCheatModal) {
+                drawCheatModal(c);
+            }
+        }
+
+        private void drawCheatModal(Canvas c) {
+            // Dark Dimmed Background
+            c.drawRect(0, 0, getWidth(), getHeight(), modalBgPaint);
+
+            // Modal Card Box
+            c.drawRoundRect(rectCheatModalBox, 20f, 20f, modalBoxPaint);
+            c.drawRoundRect(rectCheatModalBox, 20f, 20f, modalBorderPaint);
+
+            // Modal Header Title
+            c.drawText("⚡ DRAGON MANIA CHEATS ⚡", rectCheatModalBox.centerX(), rectCheatModalBox.top + 38f, modalTitlePaint);
+
+            // Cheat Options
+            drawCheatOption(c, rectCheatGold, "💰 +99.999.999 GOLD (COINS)");
+            drawCheatOption(c, rectCheatGems, "💎 +99.999.999 GEMS (CASH)");
+            drawCheatOption(c, rectCheatFood, "🍎 +99.999.999 MAKANAN NAGA");
+            drawCheatOption(c, rectCheatLevel, "👑 MAX LEVEL 40 & MAX XP");
+            drawCheatOption(c, rectCheatEnergy, "⚡ MAX ENERGY (100% PULIH)");
+            drawCheatOption(c, rectCheatCooldown, "⏳ SKIP SEMUA COOLDOWN / INSTAN");
+
+            // Close Button
+            Paint closeBg = new Paint();
+            closeBg.setColor(0xCCB71C1C); // Crimson Red
+            c.drawRoundRect(rectCheatClose, 10f, 10f, closeBg);
+            c.drawText("❌ TUTUP / KEMBALI", rectCheatClose.centerX(), rectCheatClose.centerY() + 7f, modalItemTextPaint);
+        }
+
+        private void drawCheatOption(Canvas c, RectF rect, String label) {
+            c.drawRoundRect(rect, 10f, 10f, modalItemPaint);
+            c.drawRoundRect(rect, 10f, 10f, modalItemBorderPaint);
+            c.drawText(label, rect.centerX(), rect.centerY() + 7f, modalItemTextPaint);
         }
 
         @Override
         public boolean onTouchEvent(MotionEvent event) {
-            javax.microedition.lcdui.Canvas canvas = javax.microedition.lcdui.Canvas.currentInstance;
-            if (canvas == null) return true;
-
             int action = event.getActionMasked();
             float tx = event.getX();
             float ty = event.getY();
+
+            // Handle Cheat Modal clicks
+            if (showCheatModal) {
+                if (action == MotionEvent.ACTION_DOWN) {
+                    if (rectCheatGold.contains(tx, ty)) {
+                        applyCheatGold();
+                        triggerVibrate(35);
+                        showToast("💰 +99.999.999 GOLD AKTIF!");
+                        return true;
+                    } else if (rectCheatGems.contains(tx, ty)) {
+                        applyCheatGems();
+                        triggerVibrate(35);
+                        showToast("💎 +99.999.999 GEMS AKTIF!");
+                        return true;
+                    } else if (rectCheatFood.contains(tx, ty)) {
+                        applyCheatFood();
+                        triggerVibrate(35);
+                        showToast("🍎 +99.999.999 FOOD AKTIF!");
+                        return true;
+                    } else if (rectCheatLevel.contains(tx, ty)) {
+                        applyCheatLevel();
+                        triggerVibrate(35);
+                        showToast("👑 LEVEL 40 & MAX XP AKTIF!");
+                        return true;
+                    } else if (rectCheatEnergy.contains(tx, ty)) {
+                        applyCheatEnergy();
+                        triggerVibrate(35);
+                        showToast("⚡ ENERGY PENUH 100%!");
+                        return true;
+                    } else if (rectCheatCooldown.contains(tx, ty)) {
+                        applyCheatCooldown();
+                        triggerVibrate(35);
+                        showToast("⏳ COOLDOWN SELESAI / INSTAN!");
+                        return true;
+                    } else if (rectCheatClose.contains(tx, ty) || !rectCheatModalBox.contains(tx, ty)) {
+                        showCheatModal = false;
+                        triggerVibrate(25);
+                        return true;
+                    }
+                }
+                return true;
+            }
+
+            // Check Floating Cheat Button click
+            if (action == MotionEvent.ACTION_DOWN && rectCheatBtn.contains(tx, ty)) {
+                showCheatModal = true;
+                triggerVibrate(30);
+                return true;
+            }
+
+            // Forward to J2ME Touchscreen Canvas
+            javax.microedition.lcdui.Canvas canvas = javax.microedition.lcdui.Canvas.currentInstance;
+            if (canvas == null) return true;
 
             float screenW = getWidth();
             float screenH = getHeight();
@@ -304,10 +526,6 @@ public class MainActivity extends Activity {
             gy = Math.max(0, Math.min(480, gy));
 
             // Samsung TS Lanskap coordinate transform:
-            // Game's internal pointerPressed(px, py) rotates via:
-            //   gx = py; gy = 480 - px;
-            // Therefore, inverse transform to feed into pointerPressed:
-            //   px = 480 - gy; py = gx;
             int px = 480 - gy;
             int py = gx;
 
@@ -325,6 +543,113 @@ public class MainActivity extends Activity {
             }
 
             return true;
+        }
+
+        private void showToast(String msg) {
+            cheatNotification = msg;
+            cheatNotificationTime = System.currentTimeMillis();
+        }
+
+        private void triggerVibrate(long ms) {
+            if (vibrator != null) {
+                try { vibrator.vibrate(ms); } catch (Exception ignored) {}
+            }
+        }
+
+        // ==========================================
+        // DRAGON MANIA CHEAT ENGINE IMPLEMENTATION
+        // ==========================================
+        private static int[] getE() {
+            try {
+                Class<?> clazzT = Class.forName("t");
+                Field fieldAb = clazzT.getDeclaredField("ab");
+                fieldAb.setAccessible(true);
+                Object objAb = fieldAb.get(null);
+                if (objAb != null) {
+                    Field fieldE = objAb.getClass().getDeclaredField("e");
+                    fieldE.setAccessible(true);
+                    return (int[]) fieldE.get(objAb);
+                }
+            } catch (Throwable t) {
+                t.printStackTrace();
+            }
+            return null;
+        }
+
+        private static void callTMethod(String name, int val) {
+            try {
+                Class<?> clazzT = Class.forName("t");
+                Method m = clazzT.getMethod(name, int.class);
+                m.invoke(null, val);
+            } catch (Throwable ignored) {}
+        }
+
+        public void applyCheatGold() {
+            int[] e = getE();
+            if (e != null && e.length > 2) {
+                e[1] = 99999999;
+                e[2] = 99999999;
+                callTMethod("g", 500000);
+            } else {
+                showToast("Buka Permainan / Save Dahulu!");
+            }
+        }
+
+        public void applyCheatGems() {
+            int[] e = getE();
+            if (e != null && e.length > 4) {
+                e[3] = 99999999;
+                e[4] = 99999999;
+                callTMethod("h", 500000);
+            } else {
+                showToast("Buka Permainan / Save Dahulu!");
+            }
+        }
+
+        public void applyCheatFood() {
+            int[] e = getE();
+            if (e != null && e.length > 6) {
+                e[5] = 99999999;
+                e[6] = 99999999;
+                callTMethod("i", 500000);
+            } else {
+                showToast("Buka Permainan / Save Dahulu!");
+            }
+        }
+
+        public void applyCheatLevel() {
+            int[] e = getE();
+            if (e != null && e.length > 9) {
+                e[7] = 40; // Max Level
+                e[8] = 99999999; // Max XP
+                e[9] = 99999999;
+            } else {
+                showToast("Buka Permainan / Save Dahulu!");
+            }
+        }
+
+        public void applyCheatEnergy() {
+            int[] e = getE();
+            if (e != null && e.length > 42) {
+                e[41] = 100; // 100% Energy
+                e[42] = 100;
+                e[15] = 0;   // Reset recharge timer
+            } else {
+                showToast("Buka Permainan / Save Dahulu!");
+            }
+        }
+
+        public void applyCheatCooldown() {
+            int[] e = getE();
+            if (e != null && e.length > 20) {
+                e[12] = 0;
+                e[13] = 0;
+                e[14] = 0;
+                e[15] = 0;
+                e[19] = 0;
+            } else {
+                showToast("Buka Permainan / Save Dahulu!");
+            }
         }
     }
 }
