@@ -50,20 +50,10 @@ public class MainActivity extends Activity {
 
         ResourceLoader.appContext = getApplicationContext();
 
-        // Cleanup any 0-byte corrupted RMS files from previous runs
+        // Ensure local save directory exists
         try {
             java.io.File rmsDir = new java.io.File(getFilesDir(), "rms");
-            if (rmsDir.exists()) {
-                java.io.File[] stores = rmsDir.listFiles();
-                if (stores != null) {
-                    for (java.io.File store : stores) {
-                        java.io.File rec1 = new java.io.File(store, "1.rec");
-                        if (rec1.exists() && rec1.length() == 0) {
-                            rec1.delete();
-                        }
-                    }
-                }
-            }
+            rmsDir.mkdirs();
         } catch (Exception ignored) {}
 
         gameView = new GameView(this);
@@ -228,6 +218,13 @@ public class MainActivity extends Activity {
         private Paint toastBgPaint;
         private Paint toastTextPaint;
 
+        // Real-Time FPS Tracker
+        private int fpsFrameCount = 0;
+        private long lastFpsTime = 0;
+        private float currentFps = 60.0f;
+        private Paint fpsBgPaint;
+        private Paint fpsPaint;
+
         public GameView(Context context) {
             super(context);
             holder = getHolder();
@@ -303,6 +300,15 @@ public class MainActivity extends Activity {
             toastTextPaint.setTextSize(24f);
             toastTextPaint.setFakeBoldText(true);
             toastTextPaint.setTextAlign(Paint.Align.CENTER);
+
+            fpsBgPaint = new Paint();
+            fpsBgPaint.setColor(0x99000000);
+            fpsBgPaint.setStyle(Paint.Style.FILL);
+
+            fpsPaint = new Paint(Paint.ANTI_ALIAS_FLAG);
+            fpsPaint.setColor(0xFF00FF66); // Neon Green FPS
+            fpsPaint.setTextSize(20f);
+            fpsPaint.setFakeBoldText(true);
         }
 
         @Override
@@ -330,11 +336,12 @@ public class MainActivity extends Activity {
             // Fill 100% full screen edge-to-edge following user device resolution
             rectGame.set(0, 0, w, h);
 
-            // Floating Cheat button in top-right corner
-            float btnW = 130f;
-            float btnH = 48f;
-            float margin = 16f;
-            rectCheatBtn.set(w - btnW - margin, margin, w - margin, margin + btnH);
+            // Floating Cheat button in bottom center (tengah bawah)
+            float btnW = 140f;
+            float btnH = 44f;
+            float btnX = (w - btnW) / 2f;
+            float btnY = h - btnH - 12f;
+            rectCheatBtn.set(btnX, btnY, btnX + btnW, btnY + btnH);
 
             // Layout Cheat Modal
             float modalW = Math.min(w * 0.85f, 560f);
@@ -400,7 +407,21 @@ public class MainActivity extends Activity {
                 }
             }
 
-            // 2. Draw Floating ⚡ CHEAT Button
+            // 1b. Real-Time FPS Display (Top-Left)
+            long now = System.currentTimeMillis();
+            fpsFrameCount++;
+            if (now - lastFpsTime >= 500) {
+                currentFps = (fpsFrameCount * 1000f) / Math.max(1, (now - lastFpsTime));
+                fpsFrameCount = 0;
+                lastFpsTime = now;
+            }
+            String fpsStr = String.format("%.1f FPS", currentFps);
+            float fpsW = fpsPaint.measureText(fpsStr);
+            RectF fpsBadge = new RectF(16f, 16f, 16f + fpsW + 18f, 16f + 30f);
+            c.drawRoundRect(fpsBadge, 8f, 8f, fpsBgPaint);
+            c.drawText(fpsStr, 25f, 16f + 22f, fpsPaint);
+
+            // 2. Draw Floating ⚡ CHEAT Button (Tengah Bawah)
             c.drawRoundRect(rectCheatBtn, 14f, 14f, cheatBtnPaint);
             c.drawRoundRect(rectCheatBtn, 14f, 14f, cheatBtnBorderPaint);
             c.drawText("⚡ CHEAT", rectCheatBtn.centerX(), rectCheatBtn.centerY() + 7f, cheatBtnTextPaint);
