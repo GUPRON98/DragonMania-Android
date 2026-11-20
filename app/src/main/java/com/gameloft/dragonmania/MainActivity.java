@@ -37,6 +37,12 @@ public class MainActivity extends Activity {
                 WindowManager.LayoutParams.FLAG_FULLSCREEN);
         getWindow().addFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON);
 
+        // Edge-to-edge support across notches / display cutouts
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.P) {
+            getWindow().getAttributes().layoutInDisplayCutoutMode =
+                    WindowManager.LayoutParams.LAYOUT_IN_DISPLAY_CUTOUT_MODE_SHORT_EDGES;
+        }
+
         hideSystemUI();
 
         ResourceLoader.appContext = getApplicationContext();
@@ -226,17 +232,8 @@ public class MainActivity extends Activity {
 
         private void layoutScreen(int w, int h) {
             if (w <= 0 || h <= 0) return;
-            // Native game resolution is 800 x 480 (5:3 aspect ratio)
-            float origW = 800f;
-            float origH = 480f;
-
-            float scale = Math.min((float) w / origW, (float) h / origH);
-            float renderW = origW * scale;
-            float renderH = origH * scale;
-            float left = (w - renderW) / 2f;
-            float top = (h - renderH) / 2f;
-
-            rectGame.set(left, top, left + renderW, top + renderH);
+            // Fill 100% full screen edge-to-edge following user device resolution
+            rectGame.set(0, 0, w, h);
         }
 
         @Override
@@ -292,18 +289,16 @@ public class MainActivity extends Activity {
             float tx = event.getX();
             float ty = event.getY();
 
-            if (!rectGame.contains(tx, ty)) {
-                // If touch is outside aspect-ratio bounds, clamp to edge
-                tx = Math.max(rectGame.left, Math.min(rectGame.right, tx));
-                ty = Math.max(rectGame.top, Math.min(rectGame.bottom, ty));
-            }
+            float screenW = getWidth();
+            float screenH = getHeight();
+            if (screenW <= 0 || screenH <= 0) return true;
 
-            // Convert to 800x480 landscape game coordinates
-            float scale = rectGame.width() / 800f;
-            if (scale <= 0) return true;
+            // Dynamically scale 100% full screen touch to 800x480 landscape game coordinates
+            float scaleX = screenW / 800f;
+            float scaleY = screenH / 480f;
 
-            int gx = (int) ((tx - rectGame.left) / scale);
-            int gy = (int) ((ty - rectGame.top) / scale);
+            int gx = (int) (tx / scaleX);
+            int gy = (int) (ty / scaleY);
 
             gx = Math.max(0, Math.min(800, gx));
             gy = Math.max(0, Math.min(480, gy));
