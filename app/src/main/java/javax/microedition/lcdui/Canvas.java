@@ -1,6 +1,7 @@
 package javax.microedition.lcdui;
 
 import android.graphics.Bitmap;
+import android.graphics.Matrix;
 
 public abstract class Canvas extends Displayable {
     public static final int UP = 1;
@@ -28,11 +29,13 @@ public abstract class Canvas extends Displayable {
 
     public static volatile Canvas currentInstance;
 
-    // Double buffering for Android SurfaceView
+    // Samsung TS Lanskap uses a 480x800 internal portrait buffer
+    // that is rendered rotated 270 degrees to produce 800x480 true landscape
     private Image backBufferImage;
     private Graphics bufferGraphics;
     private Bitmap frontBitmap;
     private android.graphics.Canvas frontCanvas;
+    private Matrix rotateMatrix;
 
     public static volatile Bitmap displayBitmap;
     public static volatile boolean frameReady = false;
@@ -41,20 +44,28 @@ public abstract class Canvas extends Displayable {
     public Canvas() {
         currentInstance = this;
         try {
-            backBufferImage = Image.createImage(800, 480);
+            // 480 wide x 800 tall internal buffer
+            backBufferImage = Image.createImage(480, 800);
             bufferGraphics = backBufferImage.getGraphics();
+
+            // 800 wide x 480 tall landscape display buffer
             frontBitmap = Bitmap.createBitmap(800, 480, Bitmap.Config.ARGB_8888);
             frontCanvas = new android.graphics.Canvas(frontBitmap);
+
+            rotateMatrix = new Matrix();
+            rotateMatrix.postRotate(270);
+            rotateMatrix.postTranslate(0, 480);
+
             displayBitmap = frontBitmap;
         } catch (Throwable ignored) {}
     }
 
     public int getWidth() {
-        return 800;
+        return 480;
     }
 
     public int getHeight() {
-        return 480;
+        return 800;
     }
 
     public boolean hasPointerEvents() {
@@ -82,7 +93,7 @@ public abstract class Canvas extends Displayable {
                 if (backBufferImage != null && frontCanvas != null) {
                     Bitmap bmp = backBufferImage.getBitmap();
                     if (bmp != null) {
-                        frontCanvas.drawBitmap(bmp, 0, 0, null);
+                        frontCanvas.drawBitmap(bmp, rotateMatrix, null);
                         displayBitmap = frontBitmap;
                         frameReady = true;
                     }
