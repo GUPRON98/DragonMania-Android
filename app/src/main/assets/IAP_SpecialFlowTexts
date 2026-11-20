@@ -1,0 +1,22 @@
+8_EN;6;10;11;
+10_EN;7;12;13;
+11_EN;8;14;15;
+15_EN;6;10;11;18;
+7_EN;6;10;11;
+4_EN;9;16;17;19;20;
+6;Are you sure you want to buy this item? Price: %s0
+7;%s0 plus the cost of one standard-rate SMS will be charged to your mobile phone bill or deducted from your prepaid credit. \nBy tapping "Buy Now," you confirm that you are over the age of 16 and have the bill payer’s permission to make this purchase.
+8;Apakah Anda akan membeli %s1 seharga %s0 (+PPN)? CS: 021-3918614.
+9;Denne mulighed koster %s0 + sms-takst (afhængigt af dit telefonselskabs priser) 
+10;OK
+11;Later
+12;Buy Now
+13;Cancel
+14;Beli
+15;Batal
+16;Køb nu
+17;Senere 
+18;CS Hotline 6338 7005. Premium SMS Service Provider Macro Kiosk Pte Limited. Operating Hours: MON-FRI 9AM-6PM 
+19;+ price of 1 SMS
+20;No 14-day cooling off period
+
