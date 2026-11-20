@@ -23,7 +23,9 @@ public class RecordStore {
         if (ResourceLoader.appContext != null) {
             return new File(ResourceLoader.appContext.getFilesDir(), "rms");
         }
-        return new File("/data/data/com.gameloft.dragonmania/files", "rms");
+        File fallback = new File("/sdcard/ai/rms_dragonmania");
+        fallback.mkdirs();
+        return fallback;
     }
 
     public static RecordStore openRecordStore(String recordStoreName, boolean createIfNecessary) throws RecordStoreException {

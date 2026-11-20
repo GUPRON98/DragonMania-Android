@@ -7,7 +7,7 @@ public class Manager {
     public static final String TONE_DEVICE_LOCATOR = "device://tone";
 
     public static Player createPlayer(InputStream stream, String type) {
-        return new Player(stream, type);
+        return new BasePlayer(stream, type);
     }
 
     public static Player createPlayer(String locator) {

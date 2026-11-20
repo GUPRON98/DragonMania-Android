@@ -4,17 +4,18 @@ import java.io.InputStream;
 import java.io.OutputStream;
 import java.io.IOException;
 
-public interface HttpConnection {
-    public static final String GET = "GET";
-    public static final String POST = "POST";
-    public static final String HEAD = "HEAD";
-    public static final int HTTP_OK = 200;
+public interface HttpConnection extends InputConnection, OutputConnection {
+    String GET = "GET";
+    String POST = "POST";
+    String HEAD = "HEAD";
+    int HTTP_OK = 200;
 
     long getLength();
     String getType();
-    InputStream openInputStream() throws IOException;
-    OutputStream openOutputStream() throws IOException;
-    void close() throws IOException;
-    void setRequestMethod(String method) throws IOException;
+    long getDate() throws IOException;
     int getResponseCode() throws IOException;
+    String getResponseMessage() throws IOException;
+    String getHeaderField(String name) throws IOException;
+    void setRequestMethod(String method) throws IOException;
+    void setRequestProperty(String key, String value) throws IOException;
 }
